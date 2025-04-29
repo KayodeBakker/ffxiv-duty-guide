@@ -197,7 +197,7 @@ export default function EditPage() {
       {/* Render filtered duties */}
       <div className="space-y-4">
         {filterDutiesByType(editedDuties).length > 0 ? (
-          filterDutiesByType(editedDuties).map((duty, _) => {
+          filterDutiesByType(editedDuties).map((duty) => {
             // Find the index of the duty in the full edited list
             const realIndex = editedDuties.findIndex(d => d.id === duty.id && d.type === duty.type);
 
