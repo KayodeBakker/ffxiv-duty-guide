@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Fuse from "fuse.js";
 import DutyCard from "@/components/DutyCard";
 import type { IDuty } from "@/types/IDuty";
-																 
+
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
@@ -14,18 +14,22 @@ export default function HomePage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch("/data/duties.json");
-        const dutiesData = await res.json();
+        const [dungeons, trials] = await Promise.all([
+          fetch("/data/dungeons.json").then((res) => res.json()),
+          fetch("/data/trials.json").then((res) => res.json()),
+        ]);
 
-		// Runtime type check
-        if (!Array.isArray(dutiesData)) {
-          console.error("duties.json is not an array:", dutiesData);
+        const combinedDutiesData = [...dungeons, ...trials].sort((a, b) => a.id - b.id);
+
+        // Runtime type check
+        if (!Array.isArray(combinedDutiesData)) {
+          console.error("duties.json is not an array:", combinedDutiesData);
           setAllDuties([]);
           return;
         }
 
         // Sort the duties by their ID (assuming 'id' is a long integer)
-        const sortedDuties = dutiesData.sort((a: IDuty, b: IDuty) => a.id - b.id);
+        const sortedDuties = combinedDutiesData.sort((a: IDuty, b: IDuty) => a.id - b.id);
 
         setAllDuties(sortedDuties);
         setResults(sortedDuties); // Show all by default
@@ -36,9 +40,6 @@ export default function HomePage() {
 
     loadData();
   }, []);
-							  
-					 
-	   
 
   useEffect(() => {
     if (search.trim() === "") {

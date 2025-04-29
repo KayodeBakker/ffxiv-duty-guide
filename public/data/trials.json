@@ -1,0 +1,100 @@
+[
+  {
+    "id": 1,
+    "slug": "the-bowl-of-embers",
+    "title": "The Bowl of Embers",
+    "type": "Trial",
+    "patch": "2.1",
+    "tags": [
+      "Ifrit",
+      "Trial",
+      "ARR"
+    ],
+    "backgroundImage": "/images/the-bowl-of-embers.jpg",
+    "description": "This is the guide content for Ifrit..."
+  },
+  {
+    "id": 2,
+    "slug": "the-navel",
+    "title": "The Navel",
+    "type": "Trial",
+    "patch": "2.1",
+    "tags": [
+      "Titan",
+      "Trial",
+      "ARR"
+    ],
+    "backgroundImage": "/images/the-navel.jpg",
+    "description": "This is the guide content for Titan..."
+  },
+  {
+    "id": 3,
+    "slug": "the-howling-eye",
+    "title": "The Howling Eye",
+    "type": "Trial",
+    "patch": "2.1",
+    "tags": [
+      "Garuda",
+      "Trial",
+      "ARR"
+    ],
+    "backgroundImage": "/images/the-howling-eye.jpg",
+    "description": "This is the guide content for Garuda..."
+  },
+  {
+    "id": 4,
+    "slug": "the-porta-decumana",
+    "title": "The Porta Decumana",
+    "type": "Trial",
+    "patch": "2.1",
+    "tags": [
+      "Ultima",
+      "Trial",
+      "ARR"
+    ],
+    "backgroundImage": "/images/the-porta-decumana.jpg",
+    "description": "This is the guide content for Ultima..."
+  },
+  {
+    "id": 5,
+    "slug": "the-bowl-of-embers-hard",
+    "title": "The Bowl of Embers (Hard)",
+    "type": "Trial",
+    "patch": "2.1",
+    "tags": [
+      "Ifrit",
+      "Trial",
+      "ARR"
+    ],
+    "backgroundImage": "/images/the-bowl-of-embers.jpg",
+    "description": "This is the guide content for Ifrit..."
+  },
+  {
+    "id": 6,
+    "slug": "the-howling-eye-hard",
+    "title": "The Howling Eye (Hard)",
+    "type": "Trial",
+    "patch": "2.1",
+    "tags": [
+      "Garuda",
+      "Trial",
+      "ARR"
+    ],
+    "backgroundImage": "/images/the-howling-eye.jpg",
+    "description": "This is the guide content for Garuda..."
+  },
+  {
+    "id": 7,
+    "slug": "the-navel-hard",
+    "title": "The Navel (Hard)",
+    "type": "Trial",
+    "patch": "2.1",
+    "tags": [
+      "Titan",
+      "Trial",
+      "ARR"
+    ],
+    "backgroundImage": "/images/the-navel.jpg",
+    "description": "This is the guide content for Titan..."
+  }
+]

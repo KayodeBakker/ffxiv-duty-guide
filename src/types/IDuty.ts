@@ -3,9 +3,16 @@ export interface IDuty {
     slug: string;
     title: string;
     tags: string[];
-    type: "Dungeon" | "Trial" | "Raid";  // Add type field with possible values
+    type: DutyType;  // Add type field with possible values
     patch: string;
     backgroundImage: string;
     description: string;
+  }
+
+export enum DutyType {
+    Dungeon = "Dungeon",
+    Trial = "Trial",
+    Raid = "Raid",
+    All = "All",
   }
   

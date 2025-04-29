@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { IDuty } from "@/types/IDuty";
+import { IDuty, DutyType } from "@/types/IDuty";
 
 export default function EditPage() {
   const [duties, setDuties] = useState<IDuty[]>([]);
   const [editedDuties, setEditedDuties] = useState<IDuty[]>([]);
-  const [selectedType, setSelectedType] = useState<string>("All"); // State for the selected type
+  const [selectedType, setSelectedType] = useState<DutyType>(DutyType.All); // State for the selected type
 
   // Load the duties data (first from localStorage, then from duties.json if localStorage is empty)
   useEffect(() => {
@@ -16,24 +16,24 @@ export default function EditPage() {
       setDuties(sortDutiesById(parsedDuties));  // Sort the duties when loading from localStorage
       setEditedDuties(sortDutiesById(parsedDuties));
     } else {
-      // Fetch duties.json from the public directory if localStorage is empty
-      fetch("/data/duties.json")
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Failed to fetch duties.json: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const sortedData = sortDutiesById(data);
-          setDuties(sortedData);
-          setEditedDuties(sortedData);
-          // Save the fetched duties to localStorage
-          localStorage.setItem("duties", JSON.stringify(sortedData));
-        })
-        .catch((error) => {
-          console.error("Error loading duties.json:", error);
-        });
+      Promise.all([
+        fetch("/data/dungeons.json").then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch dungeons.json: ${res.status}`);
+          return res.json();
+        }),
+        fetch("/data/trials.json").then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch trials.json: ${res.status}`);
+          return res.json();
+        }),
+      ]).then(([dungeons, trials]) => {
+        const sortedData = sortDutiesById([...dungeons, ...trials]);
+        setDuties(sortedData);
+        setEditedDuties(sortedData);
+        // Save the fetched duties to localStorage
+        localStorage.setItem("duties", JSON.stringify(sortedData));
+      }).catch((error) => {
+        console.error("Failed to fetch duties:", error);
+      });
     }
   }, []);
 
@@ -45,79 +45,116 @@ export default function EditPage() {
 
   // Function to filter duties by type
   const filterDutiesByType = (duties: IDuty[]) => {
-    if (selectedType === "All") return duties;
+    duties = sortDutiesById(duties);
+    if (selectedType === DutyType.All) return duties;
     return duties.filter((duty) => duty.type === selectedType);
   };
 
   // Update duties in local state when any field is edited
-  const handleDutyChange = (index: number, key: keyof IDuty, value: string | string[]) => {
+  const handleDutyChange = (index: number, key: keyof IDuty, value: string | string[] | DutyType) => {
     const updatedDuties = [...editedDuties];
 
-    if (key === "tags" && Array.isArray(value)) {
+    if (key === "type" && value !== updatedDuties[index].type) {
+      const relevantDuties = updatedDuties.filter((d) => d.type === value);
+      const newId = relevantDuties.length + 1;
       updatedDuties[index] = {
         ...updatedDuties[index],
-        [key]: value, // Set tags as an array
+        id: newId, // Update ID to the new max ID for the selected type
+        type: value as DutyType, // Update type
       };
-    } else {
+    }
+
+    if (key === "title") {
+      updatedDuties[index] = {
+        ...updatedDuties[index],
+        slug: (value as string).toLocaleLowerCase().replace(/\s+/g, "-"), // Update slug based on title
+        backgroundImage: "/images/" + (value as string).toLocaleLowerCase().replace(/\s+/g, "-") + ".jpg", // Update backgroundImage based on title
+        title: value as string, // For other fields (title, description), treat as string
+      };
+    }
+    else {
       updatedDuties[index] = {
         ...updatedDuties[index],
         [key]: value, // For other fields (title, description), treat as string
       };
     }
 
-    const sortedDuties = sortDutiesById(updatedDuties); // Sort after updating
-    setEditedDuties(sortedDuties);
-    localStorage.setItem("duties", JSON.stringify(sortedDuties)); // Save sorted duties
+    // const sortedDuties = sortDutiesById(updatedDuties); // Sort after updating
+    setEditedDuties(updatedDuties);
+    localStorage.setItem("duties", JSON.stringify(updatedDuties)); // Save sorted duties
   };
 
   // Function to download the modified JSON file
-  const downloadJSON = () => {
-    const blob = new Blob([JSON.stringify(editedDuties, null, 2)], {
-      type: "application/json",
-    });
+  const downloadJSON = (data: IDuty[], filename: string) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "duties.json";  // The file name when downloaded
-    a.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadAll = () => {
+    const dungeons = editedDuties.filter((d) => d.type === DutyType.Dungeon);
+    const trials = editedDuties.filter((d) => d.type === DutyType.Trial);
+    const raids = editedDuties.filter((d) => d.type === DutyType.Raid);
+
+    downloadJSON(dungeons, "dungeons.json");
+    downloadJSON(trials, "trials.json");
+    if (raids.length > 0) downloadJSON(raids, "raids.json");
+  };
+
+
   // Reset to the original duties from the server (duties.json)
   const resetToServerData = () => {
-    fetch("/data/duties.json")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to fetch duties.json: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        const sortedData = sortDutiesById(data);
-        setDuties(sortedData);
-        setEditedDuties(sortedData);
-        localStorage.setItem("duties", JSON.stringify(sortedData)); // Reset localStorage
-      })
-      .catch((error) => {
-        console.error("Error loading duties.json:", error);
-      });
+    Promise.all([
+      fetch("/data/dungeons.json").then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch dungeons.json: ${res.status}`);
+        return res.json();
+      }),
+      fetch("/data/trials.json").then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch trials.json: ${res.status}`);
+        return res.json();
+      }),
+    ]).then(([dungeons, trials]) => {
+      const sortedData = sortDutiesById([...dungeons, ...trials]);
+      setDuties(sortedData);
+      setEditedDuties(sortedData);
+      // Save the fetched duties to localStorage
+      localStorage.setItem("duties", JSON.stringify(sortedData));
+    }).catch((error) => {
+      console.error("Error loading duties.json:", error);
+    });
   };
 
   // Add a new duty with the highest id
   const addDuty = () => {
-    const newId = Math.max(...editedDuties.map(duty => duty.id)) + 1;
+    // Filter only duties of the selected type (e.g. Dungeon or Trial)
+    const relevantDuties = editedDuties.filter((d) => d.type === (selectedType === DutyType.All ? DutyType.Dungeon : selectedType));
     const newDuty: IDuty = {
-      id: newId,
+      id: 0,
       slug: "",
       title: "",
       tags: [],
-      type: "Dungeon", // Default to "Dungeon"
+      type: DutyType.Dungeon, // Default to "Dungeon"
       patch: "",
       backgroundImage: "",
       description: "",
     };
     const updatedDuties = [...editedDuties, newDuty];
-    const sortedDuties = sortDutiesById(updatedDuties);  // Sort after adding
+    const reindexedDuties = updatedDuties.map((duty, _, array) => {
+      // Get all duties of the same type
+      const sameTypeDuties = array.filter(d => d.type === duty.type);
+      // Find this duty's position among duties of the same type
+      const typeIndex = sameTypeDuties.findIndex(d => d === duty);
+      return {
+        ...duty,
+        id: typeIndex + 1, // Index within the type
+      };
+    });
+
+    const sortedDuties = sortDutiesById(reindexedDuties);  // Sort after adding
     setEditedDuties(sortedDuties);  // Update state with sorted duties
     localStorage.setItem("duties", JSON.stringify(sortedDuties));  // Save sorted duties
   };
@@ -127,10 +164,16 @@ export default function EditPage() {
     const updatedDuties = editedDuties.filter((_, i) => i !== index);
 
     // Reindex duties to ensure IDs are continuous and sorted
-    const reindexedDuties = updatedDuties.map((duty, index) => ({
-      ...duty,
-      id: index + 1, // Reindex starting from 1
-    }));
+    const reindexedDuties = updatedDuties.map((duty, _, array) => {
+      // Get all duties of the same type
+      const sameTypeDuties = array.filter(d => d.type === duty.type);
+      // Find this duty's position among duties of the same type
+      const typeIndex = sameTypeDuties.findIndex(d => d === duty);
+      return {
+        ...duty,
+        id: typeIndex + 1, // Index within the type
+      };
+    });
 
     const sortedDuties = sortDutiesById(reindexedDuties);  // Sort after removing
     setEditedDuties(sortedDuties);
@@ -147,54 +190,95 @@ export default function EditPage() {
         <select
           id="typeFilter"
           value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
+          onChange={(e) => setSelectedType(e.target.value as DutyType)}
           className="p-2 border border-gray-300 rounded-md"
         >
-          <option value="All">All</option>
-          <option value="Dungeon">Dungeons</option>
-          <option value="Trial">Trials</option>
-          <option value="Raid">Raids</option>
+          <option value={DutyType.All}>All</option>
+          <option value={DutyType.Dungeon}>Dungeons</option>
+          <option value={DutyType.Trial}>Trials</option>
+          <option value={DutyType.Raid}>Raids</option>
         </select>
+      </div>
 
-      </div><div className="space-y-4">
+      {/* Render filtered duties */}
+      <div className="space-y-4">
         {filterDutiesByType(editedDuties).length > 0 ? (
-          filterDutiesByType(editedDuties).map((duty) => {
-            const realIndex = editedDuties.findIndex(d => d.id === duty.id); // Find the real index
+          filterDutiesByType(editedDuties).map((duty, visualIndex) => {
+            // Find the index of the duty in the full edited list
+            const realIndex = editedDuties.findIndex(d => d.id === duty.id && d.type === duty.type);
 
             return (
-              <div key={duty.id} className="border p-4 rounded-md">
-                <h2 className="text-xl font-semibold">ID #{duty.id}</h2>
+              <div key={`${duty.type}-${duty.id}`} className="border p-4 rounded-md">
+                <h2 className="text-xl font-semibold">
+                  {duty.type} #{duty.id}
+                </h2>
 
+                {/* Title Input */}
                 <input
                   type="text"
-                  value={duty.title}
-                  onChange={(e) =>
-                    handleDutyChange(realIndex, "title", e.target.value)
-                  }
+                  value={duty.title ?? ""}
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    handleDutyChange(realIndex, "title", newTitle);
+                  }}
                   className="w-full p-2 border border-gray-300 rounded-md my-2"
+                  placeholder="Title"
                 />
 
-                <textarea
-                  value={duty.tags.join(", ")}
+                {/* Patch Input */}
+                <input
+                  type="text"
+                  value={duty.patch ?? ""}
                   onChange={(e) =>
-                    handleDutyChange(realIndex, "tags", e.target.value.split(",").map(tag => tag.trim()))
+                    handleDutyChange(realIndex, "patch", e.target.value)
+                  }
+                  className="w-full p-2 border border-gray-300 rounded-md my-2"
+                  placeholder="Patch (e.g., 6.5)"
+                />
+
+                {/* Background Image Input + Preview */}
+                <div className="flex items-center gap-4 my-2">
+                  {duty.backgroundImage && (
+                    <img
+                      src={duty.backgroundImage}
+                      alt="Background preview"
+                      className="w-24 h-24 object-cover rounded border"
+                    />
+                  )}
+                </div>
+
+                {/* Tags */}
+                <textarea
+                  value={duty.tags?.join(", ") ?? ""}
+                  onChange={(e) =>
+                    handleDutyChange(
+                      realIndex,
+                      "tags",
+                      e.target.value
+                        .split(",")
+                        .map(tag => tag.trim())
+                        .filter(tag => tag !== "")
+                    )
                   }
                   className="w-full p-2 border border-gray-300 rounded-md my-2"
                   placeholder="Enter tags here"
                 />
 
+                {/* Description */}
                 <textarea
-                  value={duty.description}
+                  value={duty.description ?? ""}
                   onChange={(e) =>
                     handleDutyChange(realIndex, "description", e.target.value)
                   }
                   className="w-full p-2 border border-gray-300 rounded-md my-2"
+                  placeholder="Description"
                 />
 
+                {/* Type Selector */}
                 <select
                   value={duty.type}
                   onChange={(e) =>
-                    handleDutyChange(realIndex, "type", e.target.value as IDuty["type"])
+                    handleDutyChange(realIndex, "type", e.target.value as DutyType)
                   }
                   className="w-full p-2 border border-gray-300 rounded-md my-2"
                 >
@@ -203,6 +287,7 @@ export default function EditPage() {
                   <option value="Raid">Raid</option>
                 </select>
 
+                {/* Remove Button */}
                 <button
                   onClick={() => removeDuty(realIndex)}
                   className="mt-2 bg-red-500 text-white px-4 py-2 rounded-md"
@@ -210,6 +295,8 @@ export default function EditPage() {
                   Remove
                 </button>
               </div>
+
+
             );
           })
         ) : (
@@ -217,7 +304,8 @@ export default function EditPage() {
         )}
       </div>
 
-      <div className="mt-6 flex gap-4">
+      {/* Controls */}
+      <div className="mt-6 flex gap-4 flex-wrap">
         <button
           onClick={addDuty}
           className="bg-green-500 text-white px-4 py-2 rounded-md"
@@ -231,12 +319,13 @@ export default function EditPage() {
           Reset to Server Data
         </button>
         <button
-          onClick={downloadJSON}
+          onClick={handleDownloadAll}
           className="bg-blue-500 text-white px-4 py-2 rounded-md"
         >
-          Download JSON
+          Download All Files
         </button>
       </div>
     </main>
   );
+
 }
