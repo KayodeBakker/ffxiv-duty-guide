@@ -1,6 +1,6 @@
-import type { Duty } from "@/types/Duty";
+import type { IDuty } from "@/types/IDuty";
 
-export default function DutyCard({ duty }: { duty: Duty }) {
+export default function DutyCard({ duty }: { duty: IDuty }) {
   return (
     <div className="border rounded-md shadow-md overflow-hidden">
       <img

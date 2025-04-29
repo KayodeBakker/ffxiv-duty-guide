@@ -1,8 +1,9 @@
 [
   {
+    "id": 2,
     "slug": "the-tam-tara-deepcroft",
     "title": "The Tam-Tara Deepcroft",
-    "type": null,
+    "type": "Dungeon",
     "patch": null,
     "tags": [
       "dungeon",
@@ -13,9 +14,10 @@
     "description": "A corrupted crypt crawling with undead."
   },
   {
+    "id": 1,
     "slug": "sastasha",
     "title": "Sastasha",
-    "type": null,
+    "type": "Dungeon",
     "patch": null,
     "tags": [
       "dungeon",
@@ -26,6 +28,7 @@
     "description": "A pirate cove overrun by hostile fishmen."
   },
   {
+    "id": 7,
     "slug": "the-navel-hard",
     "title": "The Navel (Hard)",
     "type": "Trial",

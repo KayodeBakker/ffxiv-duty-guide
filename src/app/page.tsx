@@ -3,29 +3,32 @@
 import { useEffect, useState } from "react";
 import Fuse from "fuse.js";
 import DutyCard from "@/components/DutyCard";
-import type { Duty } from "@/types/Duty";
+import type { IDuty } from "@/types/IDuty";
 																 
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
-  const [results, setResults] = useState<Duty[]>([]);
-  const [allDuties, setAllDuties] = useState<Duty[]>([]);
+  const [results, setResults] = useState<IDuty[]>([]);
+  const [allDuties, setAllDuties] = useState<IDuty[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
         const res = await fetch("/data/duties.json");
-        const json = await res.json();
+        const dutiesData = await res.json();
 
 		// Runtime type check
-        if (!Array.isArray(json)) {
-          console.error("duties.json is not an array:", json);
+        if (!Array.isArray(dutiesData)) {
+          console.error("duties.json is not an array:", dutiesData);
           setAllDuties([]);
           return;
         }
 
-        setAllDuties(json);
-        setResults(json); // Show all by default
+        // Sort the duties by their ID (assuming 'id' is a long integer)
+        const sortedDuties = dutiesData.sort((a: IDuty, b: IDuty) => a.id - b.id);
+
+        setAllDuties(sortedDuties);
+        setResults(sortedDuties); // Show all by default
       } catch (err) {
         console.error("Failed to load duties.json:", err);
       }
