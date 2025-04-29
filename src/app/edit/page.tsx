@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { IDuty, DutyType } from "@/types/IDuty";
 
 export default function EditPage() {
-  const [duties, setDuties] = useState<IDuty[]>([]);
   const [editedDuties, setEditedDuties] = useState<IDuty[]>([]);
   const [selectedType, setSelectedType] = useState<DutyType>(DutyType.All); // State for the selected type
 
@@ -13,7 +12,6 @@ export default function EditPage() {
     const storedDuties = localStorage.getItem("duties");
     if (storedDuties) {
       const parsedDuties = JSON.parse(storedDuties);
-      setDuties(sortDutiesById(parsedDuties));  // Sort the duties when loading from localStorage
       setEditedDuties(sortDutiesById(parsedDuties));
     } else {
       Promise.all([
@@ -27,7 +25,6 @@ export default function EditPage() {
         }),
       ]).then(([dungeons, trials]) => {
         const sortedData = sortDutiesById([...dungeons, ...trials]);
-        setDuties(sortedData);
         setEditedDuties(sortedData);
         // Save the fetched duties to localStorage
         localStorage.setItem("duties", JSON.stringify(sortedData));
@@ -119,7 +116,6 @@ export default function EditPage() {
       }),
     ]).then(([dungeons, trials]) => {
       const sortedData = sortDutiesById([...dungeons, ...trials]);
-      setDuties(sortedData);
       setEditedDuties(sortedData);
       // Save the fetched duties to localStorage
       localStorage.setItem("duties", JSON.stringify(sortedData));
@@ -130,8 +126,6 @@ export default function EditPage() {
 
   // Add a new duty with the highest id
   const addDuty = () => {
-    // Filter only duties of the selected type (e.g. Dungeon or Trial)
-    const relevantDuties = editedDuties.filter((d) => d.type === (selectedType === DutyType.All ? DutyType.Dungeon : selectedType));
     const newDuty: IDuty = {
       id: 0,
       slug: "",
@@ -203,7 +197,7 @@ export default function EditPage() {
       {/* Render filtered duties */}
       <div className="space-y-4">
         {filterDutiesByType(editedDuties).length > 0 ? (
-          filterDutiesByType(editedDuties).map((duty, visualIndex) => {
+          filterDutiesByType(editedDuties).map((duty, _) => {
             // Find the index of the duty in the full edited list
             const realIndex = editedDuties.findIndex(d => d.id === duty.id && d.type === duty.type);
 
