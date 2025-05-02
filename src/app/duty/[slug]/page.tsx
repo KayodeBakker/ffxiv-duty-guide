@@ -7,11 +7,13 @@ import path from "path";
 async function loadAllDuties(): Promise<IDuty[]> {
   const dungeonsData = await fs.readFile(path.join(process.cwd(), "public/data/dungeons.json"), "utf-8");
   const trialsData = await fs.readFile(path.join(process.cwd(), "public/data/trials.json"), "utf-8");
+  const raidsData = await fs.readFile(path.join(process.cwd(), "public/data/raids.json"), "utf-8");
 
   const dungeons = JSON.parse(dungeonsData) as IDuty[];
   const trials = JSON.parse(trialsData) as IDuty[];
+  const raids = JSON.parse(raidsData) as IDuty[];
 
-  return [...dungeons, ...trials];
+  return [...dungeons, ...trials, ...raids];
 }
 
 export async function generateStaticParams() {

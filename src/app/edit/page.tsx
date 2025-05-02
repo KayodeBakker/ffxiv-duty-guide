@@ -23,8 +23,12 @@ export default function EditPage() {
           if (!res.ok) throw new Error(`Failed to fetch trials.json: ${res.status}`);
           return res.json();
         }),
-      ]).then(([dungeons, trials]) => {
-        const sortedData = sortDutiesById([...dungeons, ...trials]);
+        fetch("/data/raids.json").then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch raids.json: ${res.status}`);
+          return res.json();
+        }),
+      ]).then(([dungeons, trials, raids]) => {
+        const sortedData = sortDutiesById([...dungeons, ...trials, ...raids]);
         setEditedDuties(sortedData);
         // Save the fetched duties to localStorage
         localStorage.setItem("duties", JSON.stringify(sortedData));
@@ -99,7 +103,7 @@ export default function EditPage() {
 
     downloadJSON(dungeons, "dungeons.json");
     downloadJSON(trials, "trials.json");
-    if (raids.length > 0) downloadJSON(raids, "raids.json");
+    downloadJSON(raids, "raids.json");
   };
 
 
@@ -114,8 +118,12 @@ export default function EditPage() {
         if (!res.ok) throw new Error(`Failed to fetch trials.json: ${res.status}`);
         return res.json();
       }),
-    ]).then(([dungeons, trials]) => {
-      const sortedData = sortDutiesById([...dungeons, ...trials]);
+      fetch("/data/raids.json").then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch raids.json: ${res.status}`);
+        return res.json();
+      }),
+    ]).then(([dungeons, trials, raids]) => {
+      const sortedData = sortDutiesById([...dungeons, ...trials, ...raids]);
       setEditedDuties(sortedData);
       // Save the fetched duties to localStorage
       localStorage.setItem("duties", JSON.stringify(sortedData));

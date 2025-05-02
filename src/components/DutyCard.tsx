@@ -4,7 +4,7 @@ import type { IDuty } from "@/types/IDuty";
 export default function DutyCard({ duty }: { duty: IDuty }) {
   return (
     <Link href={`/duty/${duty.slug}`}>
-      <div className="border rounded-md shadow-md overflow-hidden">
+      <div className="border rounded-md shadow-md overflow-hidden duty-card">
         <img
           src={duty.backgroundImage}
           alt={duty.title}

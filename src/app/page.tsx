@@ -1,40 +1,41 @@
-"use client"; // Required for client-side features like useState/useEffect
+"use client";
 
 import { useEffect, useState } from "react";
 import Fuse from "fuse.js";
+import { useSearchParams } from "next/navigation";
 import DutyCard from "@/components/DutyCard";
 import type { IDuty } from "@/types/IDuty";
-
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<IDuty[]>([]);
   const [allDuties, setAllDuties] = useState<IDuty[]>([]);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [dungeons, trials] = await Promise.all([
+        const [dungeons, trials, raids] = await Promise.all([
           fetch("/data/dungeons.json").then((res) => res.json()),
           fetch("/data/trials.json").then((res) => res.json()),
+          fetch("/data/raids.json").then((res) => res.json()),
         ]);
 
-        const combinedDutiesData = [...dungeons, ...trials].sort((a, b) => a.id - b.id);
+        const combinedDutiesData = [...dungeons, ...trials, ...raids];
 
-        // Runtime type check
         if (!Array.isArray(combinedDutiesData)) {
           console.error("duties.json is not an array:", combinedDutiesData);
           setAllDuties([]);
           return;
         }
 
-        // Sort the duties by their ID (assuming 'id' is a long integer)
-        const sortedDuties = combinedDutiesData.sort((a: IDuty, b: IDuty) => a.id - b.id);
+        const sortedDuties = combinedDutiesData.sort(
+          (a: IDuty, b: IDuty) => a.id - b.id
+        );
 
         setAllDuties(sortedDuties);
-        setResults(sortedDuties); // Show all by default
       } catch (err) {
-        console.error("Failed to load duties.json:", err);
+        console.error("Failed to load duties:", err);
       }
     }
 
@@ -42,17 +43,27 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (search.trim() === "") {
-      setResults(allDuties);
-    } else {
-      const fuse = new Fuse(allDuties, {
+    const typeFilter = searchParams.get("type")?.toLowerCase();
+
+    let filtered = allDuties;
+    
+    if (typeFilter && typeFilter !== "all") {
+      filtered = filtered.filter(
+        (duty) => duty.type?.toLowerCase() === typeFilter
+      );
+    }
+    
+
+    if (search.trim() !== "") {
+      const fuse = new Fuse(filtered, {
         keys: ["title", "tags"],
         threshold: 0.3,
       });
-      const filtered = fuse.search(search).map((r) => r.item);
-      setResults(filtered);
+      filtered = fuse.search(search).map((r) => r.item);
     }
-  }, [search, allDuties]);
+
+    setResults(filtered);
+  }, [search, searchParams, allDuties]);
 
   return (
     <main className="p-4 max-w-6xl mx-auto">

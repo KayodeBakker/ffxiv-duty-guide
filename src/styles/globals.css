@@ -41,3 +41,8 @@ button {
 button:hover {
   background-color: #3b82f6;
 }
+
+.duty-card {
+  background-color: white;
+  color: black;
+}
